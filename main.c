@@ -18,6 +18,8 @@ char threadB_stack [THREAD_STACKSIZE_MAIN];
 void *threadA_func(void *arg);
 void *threadB_func(void *arg);
 
+int stopLedBlinking = 0;
+
 kernel_pid_t pid, pid2;
 
 int msgSend(int argc, char **argv)
@@ -42,9 +44,40 @@ int uuidGen(int argc, char **argv)
     return 0;
 }
 
+int ledBlinking(int argc, char **argv) {
+    if(argc < 2) {
+        puts("usage: blink <command>");
+        puts("commands");
+        puts("\ton\tenable LED blinking");
+        puts("\toff\tdisable LED blinking");
+
+        return 1;
+    }
+    else if(strncmp(argv[1], "on", 2) == 0) {
+        puts("Enable LED");
+
+        stopLedBlinking = 0;
+
+        msg_t m;
+        m.content.value = 1;
+        msg_send(&m, pid);
+    }
+    else if(strncmp(argv[1], "off", 3) == 0) {
+        puts("Disable LED");
+
+        stopLedBlinking = 1;
+    }
+    else {
+        return 1;
+    }
+
+    return 0;
+}
+
 const shell_command_t commands[] = {
     {"msg", "send message to the secondary thread", msgSend},
     {"uuid", "Generate UUID", uuidGen},
+    {"blink", "Controls LED blinking", ledBlinking},
     {NULL, NULL, NULL}
 };
 
@@ -59,7 +92,7 @@ int main(void)
         THREAD_CREATE_STACKTEST,
         threadA_func,
         NULL,
-        "thread A"
+        "thread LEDs"
     );
 
     pid2 = thread_create(
@@ -81,23 +114,32 @@ int main(void)
 void *threadA_func(void *arg)
 {
     (void) arg;
+    msg_t m;
 
-    while (1) {
-        if (IS_USED(MODULE_XTIMER)) {
-            // ztimer_sleep(ZTIMER_USEC, 1 * US_PER_SEC);
+    while(1) {
+        msg_receive(&m);
+
+        if (m.content.value == 1) {
+            while (1) {
+                if (IS_USED(MODULE_XTIMER)) {
+                    // ztimer_sleep(ZTIMER_USEC, 1 * US_PER_SEC);
+                }
+
+                #ifdef LED0_TOGGLE
+                    LED0_TOGGLE;
+
+                    // LED1_TOGGLE;
+                    // LED2_TOGGLE;
+                    // LED3_TOGGLE;
+                #else
+                    puts("Blink! (No LED present or configured...)");
+                #endif
+
+                if(stopLedBlinking == 1) break;
+
+                xtimer_msleep(500);
+            }
         }
-
-        #ifdef LED0_TOGGLE
-            LED0_TOGGLE;
-
-            // LED1_TOGGLE;
-            // LED2_TOGGLE;
-            // LED3_TOGGLE;
-        #else
-            puts("Blink! (No LED present or configured...)");
-        #endif
-
-        xtimer_msleep(500);
     }
 
     return NULL;
