@@ -31,6 +31,7 @@ WERROR ?=0
 
 # select MicroPython package
 USEPKG += micropython
+USEPKG += lua
 
 # include boot.py as header
 BLOBS += boot.py
