@@ -1,5 +1,5 @@
 # name of your application
-APPLICATION = default
+APPLICATION = example-app
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= native
