@@ -9,7 +9,7 @@ cd RIOT/examples
 git clone https://github.com/knoppixmeister/RIOT-os-example-app.git
 cd RIOT-os-example-app
 
-make BOARD=<your_board>
+make BOARD=<your_board> (e.g. https://github.com/knoppixmeister/RIOT-os-WeAct-STM32F405RG-board )
 make BOARD=<your_board> flash
 
 make BOARD=<your_board> term (optional)
