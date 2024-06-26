@@ -35,6 +35,7 @@ USEPKG += lua
 
 # include boot.py as header
 BLOBS += boot.py
+BLOBS += $(wildcard *.lua)
 
 # Modules to include:
 USEMODULE += shell
