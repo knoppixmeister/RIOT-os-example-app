@@ -137,6 +137,30 @@ int mpyRun()
     return 0;
 }
 
+// test function. Not really usable yet
+int mpy2Run()
+{
+    uint32_t stack_dummy;
+    mp_stack_set_top((char*)&stack_dummy);
+
+    mp_stack_set_limit(THREAD_STACKSIZE_MAIN - MP_STACK_SAFEAREA);
+
+    mp_riot_init(mp_heap, sizeof(mp_heap));
+
+    while (1) {
+        if (pyexec_mode_kind == PYEXEC_MODE_RAW_REPL) {
+            if (pyexec_raw_repl() != 0) break;
+        }
+        else {
+            if (pyexec_friendly_repl() != 0) break;
+        }
+    }
+
+    puts("MPY exit");
+
+    return 0;
+}
+
 const shell_command_t commands[] = {
     {"msg", "send message to the secondary thread", msgSend},
     {"uuid", "Generate UUID", uuidGen},
@@ -146,6 +170,8 @@ const shell_command_t commands[] = {
     {"d", "Disable LED", d},
 
     {"py", "MicroPython test run", mpyRun},
+
+    // {"p", "TEST MicroPython run as command not as thread", mpy2Run},
 
     {NULL, NULL, NULL}
 };
@@ -186,6 +212,8 @@ int main(void)
 
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(commands, line_buf, SHELL_DEFAULT_BUFSIZE);
+
+    puts("AFTER shell_run");
 
     return 0;
 }
