@@ -12,20 +12,34 @@
 
 #include "shell.h"
 
+#define LD_MSK (1 << LED0_PIN_NUM)
+
 char threadA_stack [THREAD_STACKSIZE_MAIN];
 char threadB_stack [THREAD_STACKSIZE_MAIN];
 
 void *threadA_func(void *arg);
 void *threadB_func(void *arg);
 
+/*
+    DON'T change for ODR bit check as in some moments blinking LED could be disabled
+    and it looks like it not enabled (not blinking)
+*/
+int ledAlreadyBlinking = 0;
 int stopLedBlinking = 0;
 
 kernel_pid_t pid, pid2;
 
+// leave it here just for future purposes
+int isNthBitSet(int value, int nthBit)
+{
+    if (value & (1 << nthBit)) return 1; // bit is set
+    else return 0; // bit is not set
+}
+
 int msgSend(int argc, char **argv)
 {
     msg_t m;
-    m.content.value = "bla ... blah ...";
+    m.content.value = "blah ... blah ...";
     msg_send(&m, pid2);
 
     return 0;
@@ -54,15 +68,26 @@ int ledBlinking(int argc, char **argv) {
         return 1;
     }
     else if(strncmp(argv[1], "on", 2) == 0) {
+        if(ledAlreadyBlinking == 1) {
+            puts("LED already blinking");
+            return 0;
+        }
+
         puts("Enable LED");
 
         stopLedBlinking = 0;
+        ledAlreadyBlinking = 1;
 
         msg_t m;
         m.content.value = 1;
         msg_send(&m, pid);
     }
     else if(strncmp(argv[1], "off", 3) == 0) {
+        if(ledAlreadyBlinking == 0) {
+            puts("LED already switched off");
+            return 0;
+        }
+
         puts("Disable LED");
 
         stopLedBlinking = 1;
@@ -74,10 +99,26 @@ int ledBlinking(int argc, char **argv) {
     return 0;
 }
 
+int e() {
+    LED0_PORT->ODR = LD_MSK;
+
+    return 0;
+}
+
+int d() {
+    LED0_PORT->ODR = (0 << LED0_PIN_NUM);
+
+    return 0;
+}
+
 const shell_command_t commands[] = {
     {"msg", "send message to the secondary thread", msgSend},
     {"uuid", "Generate UUID", uuidGen},
     {"blink", "Controls LED blinking", ledBlinking},
+
+    {"e", "e", e},
+    {"d", "d", d},
+
     {NULL, NULL, NULL}
 };
 
@@ -125,8 +166,10 @@ void *threadA_func(void *arg)
                     // ztimer_sleep(ZTIMER_USEC, 1 * US_PER_SEC);
                 }
 
+                LED0_PORT->ODR ^= LD_MSK;
+
                 #ifdef LED0_TOGGLE
-                    LED0_TOGGLE;
+                    // LED0_TOGGLE;
 
                     // LED1_TOGGLE;
                     // LED2_TOGGLE;
@@ -135,7 +178,11 @@ void *threadA_func(void *arg)
                     puts("Blink! (No LED present or configured...)");
                 #endif
 
-                if(stopLedBlinking == 1) break;
+                if(stopLedBlinking == 1) {
+                    LED0_PORT->ODR = (0 << LED0_PIN_NUM);
+                    ledAlreadyBlinking = 0;
+                    break;
+                }
 
                 xtimer_msleep(500);
             }
