@@ -29,6 +29,12 @@ QUIET ?= 1
 
 WERROR ?=0
 
+# select MicroPython package
+USEPKG += micropython
+
+# include boot.py as header
+BLOBS += boot.py
+
 # Modules to include:
 USEMODULE += shell
 USEMODULE += shell_cmds_default

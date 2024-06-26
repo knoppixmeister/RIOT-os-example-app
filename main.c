@@ -12,13 +12,27 @@
 
 #include "shell.h"
 
+#include "micropython.h"
+#include "py/stackctrl.h"
+#include "py/builtin.h"
+#include "py/compile.h"
+#include "py/runtime.h"
+#include "py/repl.h"
+#include "py/gc.h"
+#include "py/mperrno.h"
+#include "lib/utils/pyexec.h"
+
+#include "blob/boot.py.h"
+
 #define LD_MSK (1 << LED0_PIN_NUM)
 
 char threadA_stack [THREAD_STACKSIZE_MAIN];
 char threadB_stack [THREAD_STACKSIZE_MAIN];
+char threadC_stack [THREAD_STACKSIZE_MAIN];
 
 void *threadA_func(void *arg);
 void *threadB_func(void *arg);
+void *threadC_func(void *arg);
 
 /*
     DON'T change for ODR bit check as in some moments blinking LED could be disabled
@@ -27,7 +41,9 @@ void *threadB_func(void *arg);
 int ledAlreadyBlinking = 0;
 int stopLedBlinking = 0;
 
-kernel_pid_t pid, pid2;
+kernel_pid_t pid, pid2, pid3;
+
+static char mp_heap[MP_RIOT_HEAPSIZE];
 
 // leave it here just for future purposes
 int isNthBitSet(int value, int nthBit)
@@ -111,13 +127,25 @@ int d() {
     return 0;
 }
 
+int mpyRun()
+{
+    msg_t m;
+
+    m.content.value = 1;
+    msg_send(&m, pid3);
+
+    return 0;
+}
+
 const shell_command_t commands[] = {
     {"msg", "send message to the secondary thread", msgSend},
     {"uuid", "Generate UUID", uuidGen},
     {"blink", "Controls LED blinking", ledBlinking},
 
-    {"e", "e", e},
-    {"d", "d", d},
+    {"e", "Enable LED", e},
+    {"d", "Disable LED", d},
+
+    {"py", "MicroPython test run", mpyRun},
 
     {NULL, NULL, NULL}
 };
@@ -144,6 +172,16 @@ int main(void)
         threadB_func,
         NULL,
         "thread Msgs"
+    );
+
+    pid3 = thread_create(
+        threadC_stack,
+        sizeof(threadC_stack),
+        THREAD_PRIORITY_MAIN - 1,
+        THREAD_CREATE_STACKTEST,
+        threadC_func,
+        NULL,
+        "thread MicroPython"
     );
 
     char line_buf[SHELL_DEFAULT_BUFSIZE];
@@ -205,3 +243,42 @@ void *threadB_func(void *arg)
     return NULL;
 }
 
+void *threadC_func(void *arg)
+{
+    (void) arg;
+    msg_t m;
+
+    uint32_t stack_dummy;
+    mp_stack_set_top((char*)&stack_dummy);
+
+    mp_stack_set_limit(THREAD_STACKSIZE_MAIN - MP_STACK_SAFEAREA);
+
+    mp_riot_init(mp_heap, sizeof(mp_heap));
+
+    while (1) {
+        msg_receive(&m);
+
+        puts("-- Executing boot.py");
+        mp_do_str((const char *) boot_py, boot_py_len);
+        puts("-- boot.py exited. Starting REPL..");
+
+        /*
+        while (1) {
+            if (pyexec_mode_kind == PYEXEC_MODE_RAW_REPL) {
+                if (pyexec_raw_repl() != 0) {
+                    break;
+                }
+            }
+            else {
+                if (pyexec_friendly_repl() != 0) {
+                    break;
+                }
+            }
+        }
+
+        puts("soft reboot");
+        */
+    }
+
+    return NULL;
+}
