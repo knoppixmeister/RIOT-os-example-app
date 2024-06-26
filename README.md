@@ -1,5 +1,7 @@
 # RIOT os example app
 
+With two threads, interactive shell console and blinking led
+
 Instructions:
 
 ```
