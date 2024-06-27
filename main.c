@@ -190,7 +190,7 @@ const shell_command_t commands[] = {
 
     {"pb", "Progress bar test", pbTest},
 
-    // {"p", "TEST MicroPython run as command line interpreter", mpy2Run},
+    {"p", "TEST MicroPython run as command line interpreter", mpy2Run},
 
     {NULL, NULL, NULL}
 };
@@ -229,11 +229,15 @@ int main(void)
         "thread MicroPython"
     );
 
+    /*
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(commands, line_buf, SHELL_DEFAULT_BUFSIZE);
     // shell_run_once(commands, line_buf, SHELL_DEFAULT_BUFSIZE);
+    */
 
-    puts("AFTER shell_run");
+    mpy2Run();
+
+    // puts("AFTER shell_run");
 
     return 0;
 }
