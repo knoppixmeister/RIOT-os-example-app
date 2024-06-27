@@ -55,6 +55,7 @@ kernel_pid_t pid, pid2, pid3;
 static char mp_heap[MP_RIOT_HEAPSIZE];
 
 int btnsCnt = 0;
+int ledsCnt = 0;
 
 // leave it here just for future purposes
 int isNthBitSet(int value, int nthBit)
@@ -131,10 +132,17 @@ int e() {
     // on stm32f411ce on disable should be written 0 instead of 1
     // LED0_PORT->ODR = LD_MSK;
 
+    /*
     #ifdef BOARD_WEACT_F411CE
         LED0_PORT->ODR = (0 << LED0_PIN_NUM);
     #else
         LED0_PORT->ODR = (1 << LED0_PIN_NUM);
+    #endif
+    */
+
+    // or better
+    #ifdef LED0_ON
+        LED0_ON;
     #endif
 
     return 0;
@@ -144,10 +152,17 @@ int d() {
     // on stm32f405 its correct sequence
     // on stm32f411ce on disable should be written 1 instead of 0
 
+    /*
     #ifdef BOARD_WEACT_F411CE
         LED0_PORT->ODR = (1 << LED0_PIN_NUM);
     #else
         LED0_PORT->ODR = (0 << LED0_PIN_NUM);
+    #endif
+    */
+
+    // or better
+    #ifdef LED0_OFF
+        LED0_OFF;
     #endif
 
     return 0;
@@ -221,6 +236,20 @@ int btnStats()
     return 0;
 }
 
+int ledStats()
+{
+    puts("On-board LED test\n");
+
+    if (ledsCnt == 0) {
+        puts("NO LEDs AVAILABLE");
+    }
+    else {
+        printf("Available LEDs: %i\n", ledsCnt);
+    }
+
+    return 0;
+}
+
 const shell_command_t commands[] = {
     {"msg", "send message to the secondary thread", msgSend},
     {"uuid", "Generate UUID", uuidGen},
@@ -230,6 +259,8 @@ const shell_command_t commands[] = {
 
     {"e", "Enable LED", e},
     {"d", "Disable LED", d},
+
+    {"l", "LED stats", ledStats},
 
     {"py", "MicroPython test run", mpyRun},
 
@@ -278,6 +309,15 @@ int main(void)
         NULL,
         "thread MicroPython"
     );
+
+// -----------------------------------------------------------------------------
+
+    // LEDs code: https://github.com/RIOT-OS/RIOT/blob/master/tests/leds/main.c
+
+    #ifdef LED0_ON
+        ++ledsCnt;
+        LED0_OFF;
+    #endif
 
 // -----------------------------------------------------------------------------
 
@@ -346,10 +386,10 @@ void *threadA_func(void *arg)
                     // ztimer_sleep(ZTIMER_USEC, 1 * US_PER_SEC);
                 }
 
-                LED0_PORT->ODR ^= LD_MSK;
+                // LED0_PORT->ODR ^= LD_MSK;
 
                 #ifdef LED0_TOGGLE
-                    // LED0_TOGGLE;
+                    LED0_TOGGLE;
 
                     // LED1_TOGGLE;
                     // LED2_TOGGLE;
@@ -359,7 +399,6 @@ void *threadA_func(void *arg)
                 #endif
 
                 if(stopLedBlinking == 1) {
-                    // LED0_PORT->ODR = (0 << LED0_PIN_NUM);
                     d();
                     ledAlreadyBlinking = 0;
                     break;
