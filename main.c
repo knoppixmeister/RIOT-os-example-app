@@ -281,6 +281,8 @@ int main(void)
 
 // -----------------------------------------------------------------------------
 
+    // BUTTONs handling code from: https://github.com/RIOT-OS/RIOT/tree/master/tests/buttons
+
     /* get the number of available buttons and init interrupt handler */
 #ifdef BTN0_PIN
     if (gpio_init_int(BTN0_PIN, BTN0_MODE, TEST_FLANK, cb, (void *)btnsCnt) < 0) {
