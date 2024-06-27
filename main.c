@@ -24,6 +24,8 @@
 
 #include "blob/boot.py.h"
 
+#include "progress_bar.h"
+
 #define LD_MSK (1 << LED0_PIN_NUM)
 
 char threadA_stack [THREAD_STACKSIZE_MAIN];
@@ -161,6 +163,21 @@ int mpy2Run()
     return 0;
 }
 
+int pbTest()
+{
+    for(int i=0; i<100; i++) {
+        progress_bar_print("", "", i);
+
+        xtimer_msleep(100);
+    }
+
+    puts("");
+
+    // progress_bar_print("", "", 50);
+
+    return 0;
+}
+
 const shell_command_t commands[] = {
     {"msg", "send message to the secondary thread", msgSend},
     {"uuid", "Generate UUID", uuidGen},
@@ -170,6 +187,8 @@ const shell_command_t commands[] = {
     {"d", "Disable LED", d},
 
     {"py", "MicroPython test run", mpyRun},
+
+    {"pb", "Progress bar test", pbTest},
 
     // {"p", "TEST MicroPython run as command not as thread", mpy2Run},
 
@@ -212,6 +231,7 @@ int main(void)
 
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(commands, line_buf, SHELL_DEFAULT_BUFSIZE);
+    // shell_run_once(commands, line_buf, SHELL_DEFAULT_BUFSIZE);
 
     puts("AFTER shell_run");
 
