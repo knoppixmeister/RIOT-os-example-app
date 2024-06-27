@@ -118,13 +118,28 @@ int ledBlinking(int argc, char **argv) {
 }
 
 int e() {
-    LED0_PORT->ODR = LD_MSK;
+    // on stm32f405 its correct sequence
+    // on stm32f411ce on disable should be written 0 instead of 1
+    // LED0_PORT->ODR = LD_MSK;
+
+    #ifdef BOARD_WEACT_F411CE
+        LED0_PORT->ODR = (0 << LED0_PIN_NUM);
+    #else
+        LED0_PORT->ODR = (1 << LED0_PIN_NUM);
+    #endif
 
     return 0;
 }
 
 int d() {
-    LED0_PORT->ODR = (0 << LED0_PIN_NUM);
+    // on stm32f405 its correct sequence
+    // on stm32f411ce on disable should be written 1 instead of 0
+
+    #ifdef BOARD_WEACT_F411CE
+        LED0_PORT->ODR = (1 << LED0_PIN_NUM);
+    #else
+        LED0_PORT->ODR = (0 << LED0_PIN_NUM);
+    #endif
 
     return 0;
 }
@@ -190,7 +205,7 @@ const shell_command_t commands[] = {
 
     {"pb", "Progress bar test", pbTest},
 
-    {"p", "TEST MicroPython run as command line interpreter", mpy2Run},
+    // {"p", "TEST MicroPython run as command line interpreter", mpy2Run},
 
     {NULL, NULL, NULL}
 };
@@ -229,13 +244,11 @@ int main(void)
         "thread MicroPython"
     );
 
-    /*
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(commands, line_buf, SHELL_DEFAULT_BUFSIZE);
     // shell_run_once(commands, line_buf, SHELL_DEFAULT_BUFSIZE);
-    */
 
-    mpy2Run();
+    // mpy2Run();
 
     // puts("AFTER shell_run");
 
@@ -269,7 +282,8 @@ void *threadA_func(void *arg)
                 #endif
 
                 if(stopLedBlinking == 1) {
-                    LED0_PORT->ODR = (0 << LED0_PIN_NUM);
+                    // LED0_PORT->ODR = (0 << LED0_PIN_NUM);
+                    d();
                     ledAlreadyBlinking = 0;
                     break;
                 }
