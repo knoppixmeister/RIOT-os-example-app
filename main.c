@@ -8,6 +8,7 @@
 #include "clk.h"
 
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "shell.h"
@@ -26,7 +27,13 @@
 
 #include "progress_bar.h"
 
+#include "board.h"
+#include "periph/gpio.h"
+#include "periph_conf.h"
+
 #define LD_MSK (1 << LED0_PIN_NUM)
+
+#define TEST_FLANK      GPIO_FALLING
 
 char threadA_stack [THREAD_STACKSIZE_MAIN];
 char threadB_stack [THREAD_STACKSIZE_MAIN];
@@ -210,6 +217,11 @@ const shell_command_t commands[] = {
     {NULL, NULL, NULL}
 };
 
+static void cb(void *arg)
+{
+    printf("Pressed BTN%d\n", (int)arg);
+}
+
 int main(void)
 {
     puts("Welcome to RIOT!");
@@ -243,6 +255,52 @@ int main(void)
         NULL,
         "thread MicroPython"
     );
+
+// -----------------------------------------------------------------------------
+
+    /*
+    int cnt = 0;
+    /* get the number of available buttons and init interrupt handler *
+#ifdef BTN0_PIN
+    if (gpio_init_int(BTN0_PIN, BTN0_MODE, TEST_FLANK, cb, (void *)cnt) < 0) {
+        puts("[FAILED] init BTN0!");
+        return 1;
+    }
+    ++cnt;
+#endif
+#ifdef BTN1_PIN
+    if (gpio_init_int(BTN1_PIN, BTN1_MODE, TEST_FLANK, cb, (void *)cnt) < 0) {
+        puts("[FAILED] init BTN1!");
+        return 1;
+    }
+    ++cnt;
+#endif
+#ifdef BTN2_PIN
+    if (gpio_init_int(BTN2_PIN, BTN2_MODE, TEST_FLANK, cb, (void *)cnt) < 0) {
+        puts("[FAILED] init BTN2!");
+        return 1;
+    }
+    ++cnt;
+#endif
+#ifdef BTN3_PIN
+    if (gpio_init_int(BTN3_PIN, BTN3_MODE, TEST_FLANK, cb, (void *)cnt) < 0) {
+        puts("[FAILED] init BTN3!");
+        return 1;
+    }
+    ++cnt;
+#endif
+    puts("On-board button test\n");
+    /* cppcheck-suppress knownConditionTrueFalse
+     * rationale: board-dependent ifdefs *
+    if (cnt == 0) {
+        puts("[FAILED] no buttons available!");
+        return 2;
+    }
+    printf(" -- Available buttons: %i\n\n", cnt);
+    puts(" -- Try pressing buttons to test.\n");
+    puts("[SUCCESS]");
+    */
+// -----------------------------------------------------------------------------
 
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(commands, line_buf, SHELL_DEFAULT_BUFSIZE);
