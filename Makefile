@@ -57,6 +57,8 @@ USEMODULE += progress_bar
 
 FEATURES_OPTIONAL += periph_rtc
 
+FEATURES_REQUIRED += periph_gpio_irq
+
 FEATURES_REQUIRED += cpp # basic C++ support
 FEATURES_REQUIRED += libstdcpp # libstdc++ support (for #include <cstdio>)
 

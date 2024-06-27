@@ -54,6 +54,8 @@ kernel_pid_t pid, pid2, pid3;
 
 static char mp_heap[MP_RIOT_HEAPSIZE];
 
+int btnsCnt = 0;
+
 // leave it here just for future purposes
 int isNthBitSet(int value, int nthBit)
 {
@@ -200,10 +202,31 @@ int pbTest()
     return 0;
 }
 
+int btnStats()
+{
+    puts("On-board button test\n");
+
+    /* cppcheck-suppress knownConditionTrueFalse
+     * rationale: board-dependent ifdefs */
+
+    if (btnsCnt == 0) {
+        puts("[FAILED] no buttons available!");
+    }
+    else {
+        printf(" -- Available buttons: %i\n\n", btnsCnt);
+        puts(" -- Try pressing buttons to test.\n");
+        puts("[SUCCESS]");
+    }
+
+    return 0;
+}
+
 const shell_command_t commands[] = {
     {"msg", "send message to the secondary thread", msgSend},
     {"uuid", "Generate UUID", uuidGen},
     {"blink", "Controls LED blinking", ledBlinking},
+
+    {"b", "Stats of how many buttons available", btnStats},
 
     {"e", "Enable LED", e},
     {"d", "Disable LED", d},
@@ -258,16 +281,17 @@ int main(void)
 
 // -----------------------------------------------------------------------------
 
-    /*
-    int cnt = 0;
-    /* get the number of available buttons and init interrupt handler *
+    /* get the number of available buttons and init interrupt handler */
 #ifdef BTN0_PIN
-    if (gpio_init_int(BTN0_PIN, BTN0_MODE, TEST_FLANK, cb, (void *)cnt) < 0) {
+    if (gpio_init_int(BTN0_PIN, BTN0_MODE, TEST_FLANK, cb, (void *)btnsCnt) < 0) {
         puts("[FAILED] init BTN0!");
         return 1;
     }
-    ++cnt;
+    ++btnsCnt;
 #endif
+
+
+    /*
 #ifdef BTN1_PIN
     if (gpio_init_int(BTN1_PIN, BTN1_MODE, TEST_FLANK, cb, (void *)cnt) < 0) {
         puts("[FAILED] init BTN1!");
@@ -275,6 +299,7 @@ int main(void)
     }
     ++cnt;
 #endif
+
 #ifdef BTN2_PIN
     if (gpio_init_int(BTN2_PIN, BTN2_MODE, TEST_FLANK, cb, (void *)cnt) < 0) {
         puts("[FAILED] init BTN2!");
@@ -282,6 +307,7 @@ int main(void)
     }
     ++cnt;
 #endif
+
 #ifdef BTN3_PIN
     if (gpio_init_int(BTN3_PIN, BTN3_MODE, TEST_FLANK, cb, (void *)cnt) < 0) {
         puts("[FAILED] init BTN3!");
@@ -289,17 +315,8 @@ int main(void)
     }
     ++cnt;
 #endif
-    puts("On-board button test\n");
-    /* cppcheck-suppress knownConditionTrueFalse
-     * rationale: board-dependent ifdefs *
-    if (cnt == 0) {
-        puts("[FAILED] no buttons available!");
-        return 2;
-    }
-    printf(" -- Available buttons: %i\n\n", cnt);
-    puts(" -- Try pressing buttons to test.\n");
-    puts("[SUCCESS]");
     */
+
 // -----------------------------------------------------------------------------
 
     char line_buf[SHELL_DEFAULT_BUFSIZE];
