@@ -57,7 +57,7 @@ int isNthBitSet(int value, int nthBit)
 int msgSend(int argc, char **argv)
 {
     msg_t m;
-    m.content.value = "blah ... blah ...";
+    m.content.ptr = "blah ... blah ...";
     msg_send(&m, pid2);
 
     return 0;
@@ -165,7 +165,7 @@ int mpy2Run()
 
 int pbTest()
 {
-    for(int i=0; i<100; i++) {
+    for(int i=0; i<=100; i++) {
         progress_bar_print("", "", i);
 
         xtimer_msleep(100);
@@ -190,7 +190,7 @@ const shell_command_t commands[] = {
 
     {"pb", "Progress bar test", pbTest},
 
-    // {"p", "TEST MicroPython run as command not as thread", mpy2Run},
+    // {"p", "TEST MicroPython run as command line interpreter", mpy2Run},
 
     {NULL, NULL, NULL}
 };
@@ -285,7 +285,7 @@ void *threadB_func(void *arg)
 
     while (1) {
         msg_receive(&m);
-        printf("Got msg from %" PRIkernel_pid " with data %s\n", m.sender_pid, m.content.value);
+        printf("Got msg from %" PRIkernel_pid " with data %s\n", m.sender_pid, (char *) m.content.ptr);
     }
 
     return NULL;
@@ -308,7 +308,7 @@ void *threadC_func(void *arg)
 
         puts("-- Executing boot.py");
         mp_do_str((const char *) boot_py, boot_py_len);
-        puts("-- boot.py exited. Starting REPL..");
+        puts("-- boot.py exited.");
 
         /*
         while (1) {
